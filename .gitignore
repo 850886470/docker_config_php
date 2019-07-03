@@ -1,0 +1,16 @@
+!mysql/.gitkeep
+mysql/data_dir
+!mysql/data_dir/.gitkeep
+mysql/log
+!mysql/log/.gitkeep
+.idea
+docker-compose.yaml
+openstry/logs
+!openstry/logs/.gitkeep
+openstry/sites
+!openstry/sites/default.conf
+phpmyadmin/sessions
+!phpmyadmin/sessions/.gitkeep
+mongo
+!mongo/*.conf
+!mongo/db/.gitkeep

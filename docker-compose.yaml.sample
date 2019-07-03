@@ -1,0 +1,131 @@
+version: '2.2'
+
+services:
+    swoft:
+       #image: registry.cn-shenzhen.aliyuncs.com/jpg_swoole/swoft:v1
+       build: ./swoft
+       ports:
+         - "81:81"
+       volumes:
+         - /home/vagrant/sambashare:/var/www
+       stdin_open: true
+       tty: true
+       privileged: true
+       depends_on:
+         - mysql
+         - redis
+       networks:
+         - swoft
+    mysql:
+       image: mysql:5.7
+       volumes:
+         - ./mysql/data_dir:/var/lib/mysql
+         - ./mysql/log:/var/log/mysql
+       environment:
+         MYSQL_ROOT_PASSWORD: "secret"
+       ports:
+         - "3306:3306"
+       networks:
+         - swoft
+    mongodb:
+       image: mongo:latest
+       ports:
+         - "27017:27017"
+       networks:
+         - swoft
+       tty: true
+       volumes:
+         - ./mongo/db:/data/db
+         - ./mongo/mongodcert.pem:/etc/mongo/mongodcert.pem
+         - ./mongo/mongod.conf:/etc/mongo/mongod.conf
+         command: ["mongod", "--auth", "-f", "/etc/mongo/mongod.conf"]
+    mongodb2:
+       image: mongo:latest
+       ports:
+         - "27018:27018"
+       networks:
+         - swoft
+       tty: true
+       volumes:
+         - ./mongo/mongodcert.pem:/etc/mongo/mongodcert.pem
+         - ./mongo/mongod2.conf:/etc/mongo/mongod.conf
+       command: ["mongod", "-f",  "/etc/mongo/mongod.conf"]
+    mongodb3:
+       image: mongo:latest
+       ports:
+         - "27019:27019"
+       networks:
+         - swoft
+       tty: true
+       volumes:
+         - ./mongo/mongodcert.pem:/etc/mongo/mongodcert.pem
+         - ./mongo/mongod3.conf:/etc/mongo/mongod.conf
+       command: ["mongod", "-f",  "/etc/mongo/mongod.conf"]
+
+    redis:
+       image: redis:latest
+       #environment:
+       #  - ALLOW_EMPTY_PASSWORD=yes
+       command: redis-server --requirepass 5ju76a68nSuq9hq7
+       ports:
+         - "6379:6379"
+       networks:
+         - swoft
+    openstry:
+       build: openstry
+       ports:
+         - "82:82"
+       volumes:
+         - /home/vagrant/sambashare:/var/www
+         - ./openstry/default/:/usr/local/openresty/nginx/html/default
+         - ./openstry/sites/:/usr/local/openresty/nginx/sites
+         - ./openstry/logs/:/var/log/openresty
+       networks:
+         - swoft
+    node:
+       build: ./node
+       ports:
+       - 9000:9000
+       - 9005:9005
+       - 8080:8080
+       - 3000:3000
+       volumes:
+       - /home/vagrant/sambashare:/data
+       working_dir: /data
+       tty: true
+       networks:
+       - swoft
+    php-fpm:
+       image: bitnami/php-fpm
+       volumes:
+         - /home/vagrant/sambashare:/var/www
+       expose:
+         - "9000"
+         - "9501" # websocket port
+       extra_hosts:
+         # IMPORTANT: Replace with your Docker Host IP (will be appended to /etc/hosts)
+         - "dockerhost:192.168.3.4"
+         - "downloads.wordpress.org:198.143.164.250"
+         - "wordpress.org:198.143.164.252"
+       environment:
+        # IMPORTANT: Set the Remote Interpreter entry matching name to `laravel`
+         - PHP_IDE_CONFIG=serverName=dockerhost
+       networks:
+         - swoft
+    phpmyadmin:
+      image: phpmyadmin/phpmyadmin
+      container_name: phpmyadmin
+      environment:
+       - PMA_ARBITRARY=1
+       - PMA_HOST=mysql
+      restart: always
+      depends_on:
+        - mysql
+      ports:
+       - 8090:80
+      volumes:
+        - ./phpmyadmin/sessions:/sessions/
+      networks:
+        - swoft
+networks:
+  swoft:
